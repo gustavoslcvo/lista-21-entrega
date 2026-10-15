@@ -1,0 +1,70 @@
+@page "/users"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using System.Net.Http.Json
+@using BlazorUsersJsonPlaceHolderApi.Models
+@inject IHttpClientFactory HttpClientFactory
+
+<PageTitle>Usuários</PageTitle>
+
+<h1>Usuários - JsonPlaceholder</h1>
+
+@if (erro is not null)
+{
+    <p style="color:red">@erro</p>
+}
+else if (usuarios is null)
+{
+    <p>Carregando...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Cidade</th>
+                <th>Empresa</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in usuarios)
+            {
+                <tr>
+                    <td>@u.Name</td>
+                    <td>@u.Address.City</td>
+                    <td>@u.Company.Name</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<User>? usuarios;
+    private string? erro;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+
+            usuarios = await client.GetFromJsonAsync<List<User>>(
+                "https://jsonplaceholder.typicode.com/users");
+
+            var primeiro = usuarios?.FirstOrDefault();
+
+            if (primeiro is not null)
+            {
+                Console.WriteLine($"Nome: {primeiro.Name}");
+                Console.WriteLine($"Cidade: {primeiro.Address.City}");
+                Console.WriteLine($"Empresa: {primeiro.Company.Name}");
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            erro = $"Erro ao consultar a API: {ex.Message}";
+            Console.WriteLine(erro);
+        }
+    }
+}
